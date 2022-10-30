@@ -56,13 +56,6 @@ build CMakeFiles/pintos.dir/main.c.o: C_COMPILER__pintos_Debug /home/samith/OS/p
   OBJECT_DIR = CMakeFiles/pintos.dir
   OBJECT_FILE_DIR = CMakeFiles/pintos.dir
 
-build CMakeFiles/pintos.dir/src/lib/kernel/readline.c.o: C_COMPILER__pintos_Debug /home/samith/OS/pintos/src/lib/kernel/readline.c || cmake_object_order_depends_target_pintos
-  DEP_FILE = CMakeFiles/pintos.dir/src/lib/kernel/readline.c.o.d
-  FLAGS = -g -std=gnu99
-  INCLUDES = -I/home/samith/OS/pintos/src -I/home/samith/OS/pintos/src/lib -I/home/samith/OS/pintos/src/lib/kernel
-  OBJECT_DIR = CMakeFiles/pintos.dir
-  OBJECT_FILE_DIR = CMakeFiles/pintos.dir/src/lib/kernel
-
 
 # =============================================================================
 # Link build statements for EXECUTABLE target pintos
@@ -71,7 +64,7 @@ build CMakeFiles/pintos.dir/src/lib/kernel/readline.c.o: C_COMPILER__pintos_Debu
 #############################################
 # Link the executable pintos
 
-build pintos: C_EXECUTABLE_LINKER__pintos_Debug CMakeFiles/pintos.dir/main.c.o CMakeFiles/pintos.dir/src/lib/kernel/readline.c.o
+build pintos: C_EXECUTABLE_LINKER__pintos_Debug CMakeFiles/pintos.dir/main.c.o
   FLAGS = -g
   OBJECT_DIR = CMakeFiles/pintos.dir
   POST_BUILD = :

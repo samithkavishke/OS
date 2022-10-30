@@ -160,26 +160,26 @@ pintos_init (void) {
             if(compare(word,"whoami")){
                 printf("%s\n","Samith Kavishke -200296M");
             }
-            else if(compare(word,shutdownword)){
+            else if(compare(word,"shutdown")){
                 printf("Shutting down!..");
                 shutdown_power_off();
             }
-            else if(compare(word,timeword)){
+            else if(compare(word,"time")){
                 int temp2=(int)rtc_get_time();
                 printf("Time spent since linux apoch is %d\n",temp2);
             }
-            else if(compare(word,priorityword)){
+            else if(compare(word,"priority")){
                 int priority=thread_get_priority();
                 printf("Priority of the main thread is %d\n",priority);
             }
-            else if(compare(word,threadword)){
+            else if(compare(word,"thread")){
                 thread_print_stats();
             }
-            else if(compare(word,exitword)){
+            else if(compare(word,"exit")){
                 printf("%s","exiting the QEMU emulater...Bye!\n");
                 break;
             }
-            else if(compare(word,ramword)){
+            else if(compare(word,"ram")){
                 printf("The RAM allocated for OS%d kB RAM\n",init_ram_pages * PGSIZE / 1024);
             }
             else{
@@ -217,15 +217,15 @@ char * read(void) {
         char *temp = malloc(sizeof(char));
         uint8_t temp1 = input_getc();
         *temp = temp1;
-        if (temp1 == 13) {
+        if (temp1 == 13) {          // space
             word[count] = 0x00;
             break;
-        } else if (temp1 == 8) {
+        } else if (temp1 == 8) {    // backspace
             printf("%s", "\b \b");
             word[count] = 0x00;
             count -= 1;
         } else {
-            printf("%c", *temp);
+            printf("%c", *temp);    // character by character read
             word[count] = *temp;
             count += 1;
         }
