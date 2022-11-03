@@ -11,6 +11,8 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "devices/timer.h"
+
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -24,6 +26,7 @@
    that are ready to run but not actually running. */
 static struct list ready_list;
 
+static struct list sleep_list;
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
@@ -92,7 +95,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
-
+  list_init(&sleep_list);
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -210,6 +213,7 @@ thread_create (const char *name, int priority,
    This function must be called with interrupts turned off.  It
    is usually a better idea to use one of the synchronization
    primitives in synch.h. */
+
 void
 thread_block (void) 
 {
@@ -298,6 +302,25 @@ thread_exit (void)
 
 /* Yields the CPU.  The current thread is not put to sleep and
    may be scheduled again immediately at the scheduler's whim. */
+void thread_sleep(int64_t ticks){
+    struct thread *cur = thread_current();
+    enum intr_level old_level;
+
+//    ASSERT()
+    old_level = intr_disable();
+
+    if (cur != idle_thread){
+        list_push_back(&sleep_list,&cur->elem);
+        cur->status = THREAD_BLOCKED;
+        cur->wake_time = timer_ticks()+ticks;
+        schedule();
+
+    }
+    intr_set_level(old_level);
+}
+
+
+
 void
 thread_yield (void) 
 {
@@ -552,17 +575,32 @@ thread_schedule_tail (struct thread *prev)
 static void
 schedule (void) 
 {
-  struct thread *cur = running_thread ();
-  struct thread *next = next_thread_to_run ();
-  struct thread *prev = NULL;
+    struct list_elem *temp,*e = list_begin(&sleep_list);
+    int64_t cur_ticks = timer_ticks();
 
-  ASSERT (intr_get_level () == INTR_OFF);
-  ASSERT (cur->status != THREAD_RUNNING);
-  ASSERT (is_thread (next));
+    while(e!= list_end(&sleep_list)){
+        struct thread *t = list_entry(e,struct thread,allelem);
+        if (cur_ticks >= t->wake_time){
+            list_push_back(&ready_list,&t->elem);
+            t->status = THREAD_READY;
+            temp = e;
+            e = list_next(e);
+            list_remove(temp);
+        }
 
-  if (cur != next)
-    prev = switch_threads (cur, next);
-  thread_schedule_tail (prev);
+        else e = list_next(e);
+    }
+//  struct thread *cur = running_thread ();
+//  struct thread *next = next_thread_to_run ();
+//  struct thread *prev = NULL;
+//
+//  ASSERT (intr_get_level () == INTR_OFF);
+//  ASSERT (cur->status != THREAD_RUNNING);
+//  ASSERT (is_thread (next));
+//
+//  if (cur != next)
+//    prev = switch_threads (cur, next);
+//  thread_schedule_tail (prev);
 }
 
 /* Returns a tid to use for a new thread. */
