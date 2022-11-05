@@ -71,75 +71,134 @@ static void locate_block_device (enum block_type, const char *name);
 #endif
 
 int pintos_init (void) NO_RETURN;
-
+char* read();
+int compare(char* word1,char* word2);
 /* Pintos main entry point. */
 int
 pintos_init (void)
 {
-  char **argv;
+    char **argv;
 
-  /* Clear BSS. */  
-  bss_init ();
+    /* Clear BSS. */
+    bss_init();
 
-  /* Break command line into arguments and parse options. */
-  argv = read_command_line ();
-  argv = parse_options (argv);
+    /* Break command line into arguments and parse options. */
+    argv = read_command_line();
+    argv = parse_options(argv);
 
-  /* Initialize ourselves as a thread so we can use locks,
-     then enable console locking. */
-  thread_init ();
-  console_init ();  
+    /* Initialize ourselves as a thread so we can use locks,
+       then enable console locking. */
+    thread_init();
+    console_init();
 
-  /* Greet user. */
-  printf ("Pintos booting with %'"PRIu32" kB RAM...\n",
-          init_ram_pages * PGSIZE / 1024);
+    /* Greet user. */
+    printf("Pintos booting with %'"
+    PRIu32
+    " kB RAM...\n",
+            init_ram_pages * PGSIZE / 1024);
 
-  /* Initialize memory system. */
-  palloc_init (user_page_limit);
-  malloc_init ();
-  paging_init ();
+    /* Initialize memory system. */
+    palloc_init(user_page_limit);
+    malloc_init();
+    paging_init();
 
-  /* Segmentation. */
+    /* Segmentation. */
 #ifdef USERPROG
-  tss_init ();
-  gdt_init ();
+    tss_init ();
+    gdt_init ();
 #endif
 
-  /* Initialize interrupt handlers. */
-  intr_init ();
-  timer_init ();
-  kbd_init ();
-  input_init ();
+    /* Initialize interrupt handlers. */
+    intr_init();
+    timer_init();
+    kbd_init();
+    input_init();
 #ifdef USERPROG
-  exception_init ();
-  syscall_init ();
+    exception_init ();
+    syscall_init ();
 #endif
 
-  /* Start thread scheduler and enable interrupts. */
-  thread_start ();
-  serial_init_queue ();
-  timer_calibrate ();
+    /* Start thread scheduler and enable interrupts. */
+    thread_start();
+    serial_init_queue();
+    timer_calibrate();
 
 #ifdef FILESYS
-  /* Initialize file system. */
-  ide_init ();
-  locate_block_devices ();
-  filesys_init (format_filesys);
+    /* Initialize file system. */
+    ide_init ();
+    locate_block_devices ();
+    filesys_init (format_filesys);
 #endif
 
-  printf ("Boot complete.\n");
-  
-  if (*argv != NULL) {
-    /* Run actions specified on kernel command line. */
-    run_actions (argv);
-  } else {
-    // TODO: no command line passed to kernel. Run interactively 
-  }
+    printf("Boot complete.\n");
+    time_t stime = rtc_get_time ();
+    if (*argv != NULL) {
+        /* Run actions specified on kernel command line. */
+        run_actions(argv);
+    } else {
+//         TODO: no command line passed to kernel. Run interactively
+        printf("Welcome to Samith's World!");
+        char *word = (char *) malloc(sizeof(char *));
+        while(1) {
+            word = (char *) read();
+            if(compare(word,"whoami")){
+                printf("samith 200296M");
+            }else if(compare(word,"time")){
+                time_t time = rtc_get_time ();
+                printf("time - %d",time-stime);
+            }else if(compare(word,"shutdown")){
+                printf("EXITING");
+                break;
+            }else if(compare(word,"ram")){
 
-  /* Finish up. */
-  shutdown ();
-  thread_exit ();
+            }
+        }
+        /* Finish up. */
+        shutdown();
+        thread_exit();
+    }
 }
+int compare(char* word1,char* word2){
+    int count = 0;
+    while(word1[count] !=0x00 && word1[count] == word2[count]){
+        if (word1[count] != word2[count]){
+            return 0;
+        }
+        count++;
+    }
+    if(word2[count]==0x00){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+
+char* read(){
+    char *word = (char *) malloc(sizeof(char *));
+    int count = 0;
+    while (1) {
+        uint8_t key = input_getc();
+
+        if (key == 0x8) {
+            printf("\b \b");
+            word[count] = 0x00;
+            count--;
+        } else if (key == 0xD) {
+            word[count] = 0x00;
+            printf("\n");
+            count = 0;
+            break;
+        } else {
+            word[count] = key;
+            printf("%c", (char) key);
+            count++;
+        }
+    }
+    return word;
+}
+
+
 
 /* Clear the "BSS", a segment that should be initialized to
    zeros.  It isn't actually stored on disk or zeroed by the
@@ -147,6 +206,12 @@ pintos_init (void)
 
    The start and end of the BSS segment is recorded by the
    linker as _start_bss and _end_bss.  See kernel.lds. */
+//char* read(){
+//    unint8_t* words =
+//
+
+
+
 static void
 bss_init (void) 
 {
