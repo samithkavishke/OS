@@ -143,8 +143,12 @@ thread_tick (void)
     kernel_ticks++;
 
   /* Enforce preemption. */
-  if (++thread_ticks >= TIME_SLICE)
-    intr_yield_on_return ();
+  if (++thread_ticks >= TIME_SLICE) {
+      if (timer_ticks()>=min_awake_time){
+          thread_awake(timer_ticks());
+      }
+      intr_yield_on_return();
+  }
 }
 
 /* Prints thread statistics. */
@@ -320,14 +324,14 @@ bool thread_less_awake(const struct list_elem * A,const struct list_elem * B,voi
    may be scheduled again immediately at the scheduler's whim. */
 void thread_awake(int64_t time){
 
-    while(1) {
+    while(!list_empty(&sleep_list)) {
         struct list_elem *selected_elem = list_pop_front(&sleep_list);
         struct thread* pointed;
         list_remove(selected_elem);
         pointed = list_entry(selected_elem,struct thread,elem);
+        void* aux;
         if(pointed->awake_time>time){
-            void* aux;
-            list_insert_oredered (&sleep_list,&thread_less_awake,aux);
+            list_insert_ordered (&sleep_list,selected_elem,&thread_less_awake,aux);
             min_awake_time = pointed->awake_time;
             break;
         }
@@ -352,14 +356,13 @@ void thread_sleep(int64_t time){
     }
 
     old_level = intr_disable();
+    void* aux;
     if(cur != idle_thread)
-//        list_push_back(&sleep_list,&cur->elem);
-        void* aux;
         list_insert_ordered(&sleep_list,&cur->elem, &thread_less_awake,aux);
     cur->status = THREAD_SLEEPING;
-    if (timer_ticks()>=min_awake_time){
-        thread_awake(timer_ticks());
-    }
+//    if (timer_ticks()>=min_awake_time){
+//        thread_awake(timer_ticks());
+//    }
     schedule();
     intr_set_level(old_level);
 }
@@ -375,7 +378,7 @@ thread_yield (void)
   old_level = intr_disable ();
   if (cur != idle_thread) 
     list_push_back (&ready_list, &cur->elem);
-//    printf("hi hello");
+//    printf("huhu hello");
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
