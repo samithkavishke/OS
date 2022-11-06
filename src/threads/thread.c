@@ -4,6 +4,7 @@
 #include <random.h>
 #include <stdio.h>
 #include <string.h>
+#include <list.h>
 #include "threads/flags.h"
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
@@ -27,6 +28,12 @@ static struct list ready_list;
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
+
+/* sleeping list implemented by samith*/
+static struct list sleep_list;
+
+/* minimum wake time*/
+int64_t min_awake_time = -1;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -92,6 +99,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init(&sleep_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -296,10 +304,68 @@ thread_exit (void)
   NOT_REACHED ();
 }
 
+bool thread_less_awake(const struct list_elem * A,const struct list_elem * B,void* aux){
+    struct thread* threadA = list_entry(A,struct thread, elem);
+    struct thread* threadB = list_entry(B,struct thread, elem);
+
+    if (threadA->awake_time<threadB->awake_time){
+        return 1;
+    }
+    else{
+        return 0;
+    }
+}
+
 /* Yields the CPU.  The current thread is not put to sleep and
    may be scheduled again immediately at the scheduler's whim. */
+void thread_awake(int64_t time){
+
+    while(1) {
+        struct list_elem *selected_elem = list_pop_front(&sleep_list);
+        struct thread* pointed;
+        list_remove(selected_elem);
+        pointed = list_entry(selected_elem,struct thread,elem);
+        if(pointed->awake_time>time){
+            void* aux;
+            list_insert_oredered (&sleep_list,&thread_less_awake,aux);
+            min_awake_time = pointed->awake_time;
+            break;
+        }
+        pointed->status = THREAD_READY;
+        list_push_back(&ready_list,selected_elem);
+    }
+    if (list_empty(&sleep_list)){
+        min_awake_time = -1;
+    }
+}
+
+
+
+
+void thread_sleep(int64_t time){
+    struct thread *cur = thread_current();
+    cur->awake_time = time;
+    enum intr_level old_level;
+
+    if(min_awake_time == -1){
+        min_awake_time = cur->awake_time;
+    }
+
+    old_level = intr_disable();
+    if(cur != idle_thread)
+//        list_push_back(&sleep_list,&cur->elem);
+        void* aux;
+        list_insert_ordered(&sleep_list,&cur->elem, &thread_less_awake,aux);
+    cur->status = THREAD_SLEEPING;
+    if (timer_ticks()>=min_awake_time){
+        thread_awake(timer_ticks());
+    }
+    schedule();
+    intr_set_level(old_level);
+}
+
 void
-thread_yield (void) 
+thread_yield (void)
 {
   struct thread *cur = thread_current ();
   enum intr_level old_level;
@@ -309,6 +375,7 @@ thread_yield (void)
   old_level = intr_disable ();
   if (cur != idle_thread) 
     list_push_back (&ready_list, &cur->elem);
+//    printf("hi hello");
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
