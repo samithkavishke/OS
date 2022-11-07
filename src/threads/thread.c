@@ -316,7 +316,6 @@ bool thread_less_awake(const struct list_elem * A,const struct list_elem * B,voi
         return 0;
     }
 }
-
 /* Yields the CPU.  The current thread is not put to sleep and
    may be scheduled again immediately at the scheduler's whim. */
 int64_t thread_awake(int64_t time){
