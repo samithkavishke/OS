@@ -144,9 +144,6 @@ thread_tick (void)
 
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE) {
-      if (timer_ticks()>=min_awake_time){
-          thread_awake(timer_ticks());
-      }
       intr_yield_on_return();
   }
 }
@@ -322,9 +319,11 @@ bool thread_less_awake(const struct list_elem * A,const struct list_elem * B,voi
 
 /* Yields the CPU.  The current thread is not put to sleep and
    may be scheduled again immediately at the scheduler's whim. */
-void thread_awake(int64_t time){
+int64_t thread_awake(int64_t time){
 
     while(!list_empty(&sleep_list)) {
+//        printf("entered loop");
+
         struct list_elem *selected_elem = list_pop_front(&sleep_list);
         struct thread* pointed;
         list_remove(selected_elem);
@@ -335,12 +334,14 @@ void thread_awake(int64_t time){
             min_awake_time = pointed->awake_time;
             break;
         }
-        pointed->status = THREAD_READY;
-        list_push_back(&ready_list,selected_elem);
+        thread_unblock(pointed);
+//        pointed->status = THREAD_READY;
+//        list_push_back(&ready_list,selected_elem);
     }
     if (list_empty(&sleep_list)){
         min_awake_time = -1;
     }
+    return min_awake_time;
 }
 
 
@@ -359,7 +360,7 @@ void thread_sleep(int64_t time){
     void* aux;
     if(cur != idle_thread)
         list_insert_ordered(&sleep_list,&cur->elem, &thread_less_awake,aux);
-    cur->status = THREAD_SLEEPING;
+    cur->status = THREAD_BLOCKED;
 //    if (timer_ticks()>=min_awake_time){
 //        thread_awake(timer_ticks());
 //    }

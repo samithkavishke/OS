@@ -358,6 +358,7 @@ run_task (char **argv)
 #else
   run_test (task);
 #endif
+  thread_print_stats ();
   printf ("Execution of '%s' complete.\n", task);
 }
 
