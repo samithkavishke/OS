@@ -139,24 +139,25 @@ pintos_init (void)
 //         TODO: no command line passed to kernel. Run interactively
         printf("Welcome to Samith's World!");
         char *word = (char *) malloc(sizeof(char *));
-        while(1) {
+        while (1) {
             word = (char *) read();
-            if(compare(word,"whoami")){
+            if (compare(word, "whoami")) {
                 printf("samith 200296M");
-            }else if(compare(word,"time")){
-                time_t time = rtc_get_time ();
-                printf("time - %d",time-stime);
-            }else if(compare(word,"shutdown")){
+            } else if (compare(word, "time")) {
+                time_t time = rtc_get_time();
+                printf("time - %d", time - stime);
+            } else if (compare(word, "shutdown")) {
                 printf("EXITING");
                 break;
-            }else if(compare(word,"ram")){
+            } else if (compare(word, "ram")) {
 
             }
         }
-        /* Finish up. */
-        shutdown();
-        thread_exit();
     }
+        /* Finish up. */
+    shutdown();
+    thread_exit();
+
 }
 int compare(char* word1,char* word2){
     int count = 0;
@@ -358,7 +359,7 @@ run_task (char **argv)
 #else
   run_test (task);
 #endif
-  thread_print_stats ();
+//  thread_print_stats ();
   printf ("Execution of '%s' complete.\n", task);
 }
 
