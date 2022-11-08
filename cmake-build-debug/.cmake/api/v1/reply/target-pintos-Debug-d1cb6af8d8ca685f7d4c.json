@@ -52,15 +52,15 @@
 			[
 				{
 					"backtrace" : 2,
-					"path" : "/home/samith/OS/pintos/src"
+					"path" : "/home/samith/OS/pintos (copy)/src"
 				},
 				{
 					"backtrace" : 2,
-					"path" : "/home/samith/OS/pintos/src/lib"
+					"path" : "/home/samith/OS/pintos (copy)/src/lib"
 				},
 				{
 					"backtrace" : 2,
-					"path" : "/home/samith/OS/pintos/src/lib/kernel"
+					"path" : "/home/samith/OS/pintos (copy)/src/lib/kernel"
 				}
 			],
 			"language" : "C",

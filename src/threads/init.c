@@ -64,20 +64,19 @@ static char **read_command_line (void);
 static char **parse_options (char **argv);
 static void run_actions (char **argv);
 static void usage (void);
-int compare(char *word1, char *word2);
-char * read(void);
+
 #ifdef FILESYS
 static void locate_block_devices (void);
 static void locate_block_device (enum block_type, const char *name);
 #endif
 
 int pintos_init (void) NO_RETURN;
-
+char* read();
+int compare(char* word1,char* word2);
 /* Pintos main entry point. */
-
-
 int
-pintos_init (void) {
+pintos_init (void)
+{
     char **argv;
 
     /* Clear BSS. */
@@ -93,8 +92,10 @@ pintos_init (void) {
     console_init();
 
     /* Greet user. */
-    printf("Pintos booting with %'"PRIu32" kB RAM...\n",
-           init_ram_pages * PGSIZE / 1024);
+    printf("Pintos booting with %'"
+    PRIu32
+    " kB RAM...\n",
+            init_ram_pages * PGSIZE / 1024);
 
     /* Initialize memory system. */
     palloc_init(user_page_limit);
@@ -130,115 +131,88 @@ pintos_init (void) {
 #endif
 
     printf("Boot complete.\n");
-
+    time_t stime = rtc_get_time ();
     if (*argv != NULL) {
         /* Run actions specified on kernel command line. */
         run_actions(argv);
     } else {
-        // TODO: no command line passed to kernel. Run interactively
-        printf("---------------Hello!---------------\n");
-        printf("---------Welcome to pintos!---------\n");
-        char *whoami=malloc(sizeof(char)*7);
-        whoami="whoami";
-        char *shutdownword=malloc(sizeof(char)*8);
-        shutdownword="shutdown";
-        char *timeword=malloc(sizeof(char)*4);
-        timeword="time";
-        char *priorityword=malloc(sizeof(char)*8);
-        priorityword="priority";
-        char *threadword=malloc(sizeof(char)*6);
-        threadword="thread";
-        char *exitword=malloc(sizeof(char)*4);
-        exitword="exit";
-        char *ramword=malloc(sizeof(char)*3);
-        ramword="ram";
-        while(1){
-            printf("CS2042>>");
-            char* word=malloc(sizeof(char));
-            word=(char*)read();
-            printf("\n");
-            if(compare(word,"whoami")){
-                printf("%s\n","Samith Kavishke -200296M");
-            }
-            else if(compare(word,"shutdown")){
-                printf("Shutting down!..");
-                shutdown_power_off();
-            }
-            else if(compare(word,"time")){
-                int temp2=(int)rtc_get_time();
-                printf("Time spent since linux apoch is %d\n",temp2);
-            }
-            else if(compare(word,"priority")){
-                int priority=thread_get_priority();
-                printf("Priority of the main thread is %d\n",priority);
-            }
-            else if(compare(word,"thread")){
-                thread_print_stats();
-            }
-            else if(compare(word,"exit")){
-                printf("%s","exiting the QEMU emulater...Bye!\n");
+//         TODO: no command line passed to kernel. Run interactively
+        printf("Welcome to Samith's World!");
+        char *word = (char *) malloc(sizeof(char *));
+        while (1) {
+            word = (char *) read();
+            if (compare(word, "whoami")) {
+                printf("samith 200296M");
+            } else if (compare(word, "time")) {
+                time_t time = rtc_get_time();
+                printf("time - %d", time - stime);
+            } else if (compare(word, "shutdown")) {
+                printf("EXITING");
                 break;
-            }
-            else if(compare(word,"ram")){
-                printf("The RAM allocated for OS%d kB RAM\n",init_ram_pages * PGSIZE / 1024);
-            }
-            else{
-                printf("%s: Command not found!\n",word);
+            } else if (compare(word, "ram")) {
+
             }
         }
-
     }
+        /* Finish up. */
+    shutdown();
+    thread_exit();
 
-    /* Finish up. */
-    shutdown ();
-    thread_exit ();
 }
-
-int compare(char *word1, char *word2){
-    int count=0;
-    while(1){
-        if(word1[count]==word2[count] && word1[count]==0x00){
-            return 1;
-        }
-        else if(word1[count]==word2[count]){
-            count+=1;
-        }
-        else{
+int compare(char* word1,char* word2){
+    int count = 0;
+    while(word1[count] !=0x00 && word1[count] == word2[count]){
+        if (word1[count] != word2[count]){
             return 0;
         }
+        count++;
+    }
+    if(word2[count]==0x00){
+        return 1;
+    }else{
+        return 0;
     }
 }
 
-char * read(void) {
-    char *word = (char *) malloc(sizeof(char) * 100);
 
+char* read(){
+    char *word = (char *) malloc(sizeof(char *));
     int count = 0;
     while (1) {
-        char *temp = malloc(sizeof(char));
-        uint8_t temp1 = input_getc();
-        *temp = temp1;
-        if (temp1 == 13) {          // space
+        uint8_t key = input_getc();
+
+        if (key == 0x8) {
+            printf("\b \b");
             word[count] = 0x00;
+            count--;
+        } else if (key == 0xD) {
+            word[count] = 0x00;
+            printf("\n");
+            count = 0;
             break;
-        } else if (temp1 == 8) {    // backspace
-            printf("%s", "\b \b");
-            word[count] = 0x00;
-            count -= 1;
         } else {
-            printf("%c", *temp);    // character by character read
-            word[count] = *temp;
-            count += 1;
+            word[count] = key;
+            printf("%c", (char) key);
+            count++;
         }
     }
     return word;
 }
 
+
+
 /* Clear the "BSS", a segment that should be initialized to
    zeros.  It isn't actually stored on disk or zeroed by the
    kernel loader, so we have to zero it ourselves.
 
    The start and end of the BSS segment is recorded by the
    linker as _start_bss and _end_bss.  See kernel.lds. */
+//char* read(){
+//    unint8_t* words =
+//
+
+
+
 static void
 bss_init (void) 
 {
@@ -385,6 +359,7 @@ run_task (char **argv)
 #else
   run_test (task);
 #endif
+//  thread_print_stats ();
   printf ("Execution of '%s' complete.\n", task);
 }
 

@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/samith/OS/pintos/cmake-build-debug"
+			"value" : "/home/samith/OS/pintos (copy)/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -463,7 +463,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/samith/OS/pintos"
+			"value" : "/home/samith/OS/pintos (copy)"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -995,7 +995,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/samith/OS/pintos/cmake-build-debug"
+			"value" : "/home/samith/OS/pintos (copy)/cmake-build-debug"
 		},
 		{
 			"name" : "pintos_IS_TOP_LEVEL",
@@ -1019,7 +1019,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/samith/OS/pintos"
+			"value" : "/home/samith/OS/pintos (copy)"
 		}
 	],
 	"kind" : "cache",
