@@ -209,10 +209,16 @@ thread_create (const char *name, int priority,
   sf->ebp = 0;
 
   /* Add to run queue. */
-//  void * aux;
-//  function(aux);
-//    printf("hi\n");
   thread_unblock (t);
+
+  if (t->priority>thread_current()->priority){
+      enum intr_level old_level;
+      old_level = intr_disable();
+      list_insert_ordered(&ready_list,&thread_current()->elem,&thread_max_priority,aux);
+      thread_current()->status = THREAD_READY;
+      schedule();
+      intr_set_level(old_level);
+  }
 
   return tid;
 }
@@ -232,6 +238,7 @@ thread_block (void)
   thread_current ()->status = THREAD_BLOCKED;
   schedule ();
 }
+void
 thread_sleeping (void)
 {
     ASSERT (!intr_context ());
@@ -257,7 +264,9 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+//  list_push_back (&ready_list, &t->elem);
+    void * aux;
+    list_insert_ordered(&ready_list,&t->elem,&thread_max_priority,aux);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -418,9 +427,10 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
-//    printf("huhu hello");
+  void * aux;
+  if (cur != idle_thread)
+      list_insert_ordered(&ready_list,&cur->elem,&thread_max_priority,aux);
+//    list_push_back (&ready_list, &cur->elem);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -447,7 +457,16 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current ()->priority = new_priority;
+    enum intr_level old_level;
+    old_level = intr_disable();
+    struct thread * cur = thread_current();
+    cur->priority = new_priority;
+    void * aux;
+    list_insert_ordered(&ready_list,&cur->elem,&thread_max_priority,aux);
+    cur->status = THREAD_READY;
+    schedule();
+    intr_set_level(old_level);
+//  thread_current ()->priority = new_priority;
 }
 
 /* Returns the current thread's priority. */
