@@ -77,6 +77,7 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+bool thread_max_priority(const struct list_elem* A,const struct list_elem *B,void* aux);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -208,6 +209,9 @@ thread_create (const char *name, int priority,
   sf->ebp = 0;
 
   /* Add to run queue. */
+//  void * aux;
+//  function(aux);
+//    printf("hi\n");
   thread_unblock (t);
 
   return tid;
@@ -228,7 +232,14 @@ thread_block (void)
   thread_current ()->status = THREAD_BLOCKED;
   schedule ();
 }
+thread_sleeping (void)
+{
+    ASSERT (!intr_context ());
+    ASSERT (intr_get_level () == INTR_OFF);
 
+    thread_current ()->status = THREAD_SLEEPING;
+    schedule ();
+}
 /* Transitions a blocked thread T to the ready-to-run state.
    This is an error if T is not blocked.  (Use thread_yield() to
    make the running thread ready.)
@@ -249,6 +260,24 @@ thread_unblock (struct thread *t)
   list_push_back (&ready_list, &t->elem);
   t->status = THREAD_READY;
   intr_set_level (old_level);
+}
+
+void
+thread_unsleeping (struct thread *t)
+{
+    enum intr_level old_level;
+
+    ASSERT (is_thread (t));
+
+    old_level = intr_disable ();
+    ASSERT (t->status == THREAD_SLEEPING);
+    void* aux;
+    list_insert_ordered(&ready_list,&t->elem,&thread_max_priority,aux);
+//    list_insert_ordered (&sleep_list,selected_elem,&thread_less_awake,aux);
+
+//  list_push_back (&ready_list, &t->elem);
+    t->status = THREAD_READY;
+    intr_set_level (old_level);
 }
 
 /* Returns the name of the running thread. */
@@ -305,6 +334,18 @@ thread_exit (void)
   NOT_REACHED ();
 }
 
+bool thread_max_priority(const struct list_elem* A,const struct list_elem *B,void* aux){
+    struct thread* threadA = list_entry(A,struct thread, elem);
+    struct thread* threadB = list_entry(B,struct thread, elem);
+
+    if (threadA->priority>threadB->priority){
+        return 1;
+    }
+    else{
+        return 0;
+    }
+}
+
 bool thread_less_awake(const struct list_elem * A,const struct list_elem * B,void* aux){
     struct thread* threadA = list_entry(A,struct thread, elem);
     struct thread* threadB = list_entry(B,struct thread, elem);
@@ -333,7 +374,8 @@ int64_t thread_awake(int64_t time){
             min_awake_time = pointed->awake_time;
             break;
         }
-        thread_unblock(pointed);
+        thread_unsleeping(pointed);
+//        thread_unblock(pointed);
 //        pointed->status = THREAD_READY;
 //        list_push_back(&ready_list,selected_elem);
     }
@@ -359,7 +401,7 @@ void thread_sleep(int64_t time){
     void* aux;
     if(cur != idle_thread)
         list_insert_ordered(&sleep_list,&cur->elem, &thread_less_awake,aux);
-    cur->status = THREAD_BLOCKED;
+    cur->status = THREAD_SLEEPING;
 //    if (timer_ticks()>=min_awake_time){
 //        thread_awake(timer_ticks());
 //    }
