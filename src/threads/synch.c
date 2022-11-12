@@ -33,7 +33,7 @@
 #include "threads/thread.h"
 
 /* Initializes semaphore SEMA to VALUE.  A semaphore is a
-   nonnegative integer along with two atomic operators for
+   non-negative integer along with two atomic operators for
    manipulating it:
 
    - down or "P": wait for the value to become positive, then
@@ -74,6 +74,7 @@ sema_down (struct semaphore *sema)
         thread_block ();
     }
   sema->value--;
+//  list_sort(&sema->waiters,&thread_max_priority,aux);
   intr_set_level (old_level);
 }
 
@@ -119,7 +120,11 @@ sema_up (struct semaphore *sema)
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                 struct thread, elem));
   sema->value++;
-  intr_set_level (old_level);
+  void * aux;
+  thread_yield();
+//  list_sort(&sema->waiters,&thread_max_priority,aux);
+
+    intr_set_level (old_level);
 }
 
 static void sema_test_helper (void *sema_);
@@ -320,9 +325,13 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED)
   ASSERT (!intr_context ());
   ASSERT (lock_held_by_current_thread (lock));
 
+  void * aux;
   if (!list_empty (&cond->waiters)) 
     sema_up (&list_entry (list_pop_front (&cond->waiters),
                           struct semaphore_elem, elem)->semaphore);
+    list_sort(&cond->waiters,&thread_max_priority,aux);
+    thread_yield();
+
 }
 
 /* Wakes up all threads, if any, waiting on COND (protected by
